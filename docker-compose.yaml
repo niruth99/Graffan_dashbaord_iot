@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    # restart: unless-stopped
+    # if you are running as root then set it to 0
+    # else find the right id with the id -u command
+    user: '0'
+    environment:
+     - GF_SERVER_ROOT_URL=http://my.grafana.server/
+    ports:
+      - '3000:3000'
+    # adding the mount volume point which we create earlier
+    volumes:
+      - './data:/var/lib/grafana'
+  postgres:
+    user: '0'
+    container_name: postgres
+    image: postgres:14.11
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-defaultpassword}
+      PGDATA: /pg_data
+    volumes:
+      - ./pg_data:/pg_data
+      - ./logs:/var/log/postgresql
+      - ./db_setup/setup.sql:/docker-entrypoint-initdb.d/01_setup.sql
+#      - ./db_setup/postgresql.conf:/etc/postgresql/14/main/postgresql.conf
+#      - ./db_setup/pg_hba.conf:/etc/postgresql/14/main/pg_hba.conf
+#    ports:
+#      - "5433:5432"
+#    restart: unless-stopped
+    build:
+      dockerfile: "./pgDockerfile"
+#    command: ["postgres", "-c", "config_file=/etc/postgresql/14/main/postgresql.conf"]
+    command: ["postgres"]
+  data:
+    container_name: data
+    volumes:
+      - ./scripts:/scripts
+    build:
+      dockerfile: "./scriptsDockerfile"
