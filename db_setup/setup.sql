@@ -59,29 +59,18 @@ COPY device_map (id, device_name) FROM stdin;
 
 
 CREATE TABLE public.data (
-    probe_id bigint,
+    probe_id bigint primary key,
     detected_on timestamp without time zone,
     device character varying(256),
     score real[],
-    best_device smallint references device_map(id),
-    supported_rates_match real[],
-    supported_rates_weight real[],
-    ext_supported_rates_match real[],
-    ext_supported_rates_weight real[],
-    ht_match real[],
-    ht_weight real[],
-    extended_match real[],
-    extended_weight real[],
-    interworking_match real[],
-    interworking_weight real[],
-    he_match real[],
-    he_weight real[],
-    vht_match real[],
-    vht_weight real[],
-    vendor_specific_match real[],
-    vendor_specific_weight real[],
-    mesh_id_match real[],
-    mesh_id_weight real[]
+    best_device smallint references device_map(id)
+);
+
+CREATE TABLE score_breakdown (
+    probe_id bigint references public.data(probe_id),
+    is_match bool,
+    feature character varying(256),
+    values real[]
 );
 
 create unique index data_idx on public.data(probe_id);

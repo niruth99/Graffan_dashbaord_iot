@@ -61,12 +61,18 @@ final_sql = f"""
 {device_mapping()}
 
 CREATE TABLE public.data (
-    probe_id bigint,
+    probe_id bigint primary key,
     detected_on timestamp without time zone,
     device character varying(256),
     score real[],
-    best_device smallint references device_map(id),
-    {addi_features()}
+    best_device smallint references device_map(id)
+);
+
+CREATE TABLE score_breakdown (
+    probe_id bigint references public.data(probe_id),
+    is_match bool,
+    feature character varying(256),
+    values real[]
 );
 
 create unique index data_idx on public.data(probe_id);

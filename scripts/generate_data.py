@@ -9,7 +9,7 @@ import os
 import iotsignature as iots
 import attr_stats
 
-n_devices = 2
+n_devices = 10
 
 devices = [f'Device {x}' for x in range(n_devices)]
 max_count_per_device = 7
@@ -137,6 +137,43 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     
     return results
 
+def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
+    data_features = [
+        'probe_id',
+        'detected_on',
+        'device',
+        'score',
+        'best_device',
+    ]
+    score_breakdown = ['probe_id']
+    [score_breakdown.extend([f'{f}_weight', f'{f}_match']) for f in features]
+    data_features = df[data_features]
+    sql.insert_pd(data_features, 'data')
+
+    rows, cols = df.shape
+
+    probe_ids = df['probe_id'].to_list()
+
+    d = {
+        'probe_id': [],
+        'is_match': [],
+        'feature': [],
+        'values': [],
+    }
+    for feat in features:
+        d['probe_id'] += probe_ids
+        d['is_match'] += [True]*rows
+        d['feature'] += [feat]*rows
+        d['values'] += df[f'{feat}_match'].to_list()
+
+        d['probe_id'] += probe_ids
+        d['is_match'] += [False]*rows
+        d['feature'] += [feat]*rows
+        d['values'] += df[f'{feat}_weight'].to_list()
+    
+    df = pd.DataFrame(d)
+    sql.insert_pd(df, 'score_breakdown')
+
 
 def real_fake_data():
     sql = SQLInterface()
@@ -184,10 +221,11 @@ def real_fake_data():
             ind += 1
         if k > 0:
             df = pd.DataFrame(res)
-            print(res)
-            print(df)
+            # print(res)
+            # print(df)
             df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
-            sql.insert_pd(df, 'data')
+            # sql.insert_pd(df, 'data')
+            proccess_upload(sql, df, features)
         time.sleep(1)
 
 
