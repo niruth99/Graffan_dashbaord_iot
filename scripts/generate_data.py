@@ -14,54 +14,6 @@ n_devices = 10
 devices = [f'Device {x}' for x in range(n_devices)]
 max_count_per_device = 7
 
-def main():
-    sql = SQLInterface()
-    data_max = sql.execute_pd('select max(probe_id) from data;')
-    print(data_max.shape, len(data_max))
-    print(data_max)
-    if data_max['max'][0] is None:
-        ind = 0
-    else:
-        ind = data_max['max'][0] + 1
-
-    while True:
-        counts = [random.randint(0, max_count_per_device) for x in range(n_devices)]
-        inds = list(range(ind, ind + sum(counts)))
-
-        df_dev_name = []
-
-        for d, c in zip(devices, counts):
-            df_dev_name += [d]*c
-
-        # times = [time.time() - random.random() for x in range(sum(counts))]
-        times = [time.time() for x in range(sum(counts))]
-
-        df = pd.DataFrame({'device':df_dev_name, 'detected_on':times, 'probe_id': inds})
-        df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
-        # print(df.to_dict('split'))
-        
-        sql.insert_pd(df, 'data')
-
-        ind += sum(counts)
-
-        time.sleep(1)
-
-def summary():
-    sql = SQLInterface()
-    while True:
-        counts = [random.randint(0, max_count_per_device) for x in range(n_devices)]
-
-        # times = [time.time() - random.random() for x in range(sum(counts))]
-        times = [time.time() for x in range(n_devices)]
-
-        df = pd.DataFrame({'device':devices, 'detected_on':times, 'count': counts})
-        df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
-        # print(df.to_dict('split'))
-        
-        sql.insert_pd(df, 'timeseries')
-
-        time.sleep(1)
-
 def match_wp(ver_sig:iots.Signature,
              ver_sig_wt:iots.Signature,
              test_sig:iots.Signature,
@@ -178,6 +130,31 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
     df = pd.DataFrame(d)
     sql.insert_pd(df, 'score_breakdown')
 
+def predict_signatures(sql:SQLInterface,
+                       ver_base:iots.SignatureBase,
+                       probes:'list[iots.Signature]',
+                       sorter: ResultSorter,
+                       features:'list[str]',
+                       ind:int
+                       ) -> int:
+    """
+        Key function to predict then commit results to db
+        See `real_fake_data()` for `sorter`, `sql`, and `features` init
+    """
+    res = []
+    for p in probes:
+        r = predict_sort(ver_base, p, sorter, features)
+        r['device'] = p.name
+        r['probe_id'] = ind
+        r['detected_on'] = time.time()
+        res.append(r)
+        ind += 1
+    if len(res) > 0:
+        df = pd.DataFrame(res)
+        df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
+        proccess_upload(sql, df, features)
+    return ind
+
 
 def real_fake_data():
     """
@@ -185,10 +162,13 @@ def real_fake_data():
     """
     sql = SQLInterface()
 
+    # Grab device map to ensure that results array are in correct order
     order_df = sql.execute_pd('select * from device_map order by id')
+    # Grab available features for easier iteration, even when feature is not present in probe
     features = sql.execute_pd('select * from available_features')['feature_name'].to_list()
-
+    # Get highest unused probe_id
     data_max = sql.execute_pd('select max(probe_id) from data;')
+
     print(f'Starting from ind: {data_max}')
     if data_max['max'][0] is None:
         ind = 0
@@ -212,27 +192,10 @@ def real_fake_data():
     sorter = ResultSorter()
     sorter.add_base(verification_base, order_df)
 
-    # for index, signature in enumerate(exp_base.signatures):
-    #     predictons = verification_base.predict(signature, probability_occ=True,verbose=True)
     while True:
-        res = []
         k = random.randint(0, n_devices)
         probes = random.choices(exp_base.signatures, k = k)
-        print(k, probes)
-        for p in probes:
-            r = predict_sort(verification_base, p, sorter, features)
-            r['device'] = p.name
-            r['probe_id'] = ind
-            r['detected_on'] = time.time()
-            res.append(r)
-            ind += 1
-        if k > 0:
-            df = pd.DataFrame(res)
-            # print(res)
-            # print(df)
-            df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
-            # sql.insert_pd(df, 'data')
-            proccess_upload(sql, df, features)
+        ind = predict_signatures(sql, verification_base, probes, sorter, features, ind)
         time.sleep(1)
 
 
