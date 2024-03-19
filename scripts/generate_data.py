@@ -138,6 +138,10 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     return results
 
 def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
+    """
+        Given a dataframe of results and list of features,
+        upload dataframe to SQL server
+    """
     data_features = [
         'probe_id',
         'detected_on',
@@ -176,6 +180,9 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
 
 
 def real_fake_data():
+    """
+        Randomly sample from signed_data.json
+    """
     sql = SQLInterface()
 
     order_df = sql.execute_pd('select * from device_map order by id')
