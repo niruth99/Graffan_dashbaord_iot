@@ -21,14 +21,34 @@ devices = devices.keys()
 
 # print(features)
 
+def device_name_map(dev_name:str):
+    dev_name = dev_name.strip()
+    map = {
+        'iphone': 'iPhone',
+        'ipad': 'iPad',
+        'Xr': 'XR',
+        'Xs': 'XS',
+        '3Rd': '3rd',
+    }
+    dev_name = ' '.join([x.title() for x in dev_name.split(' ')])
+
+    for k, v in map.items():
+        dev_name = dev_name.replace(k.title(), v)
+
+    return dev_name
+
 def device_mapping():
-    s = '\n'.join(['\t'.join([str(ix), x.lower().replace(' ', '_')]) for ix, x in enumerate(devices)])
+    d_names = [device_name_map(d) for d in devices]
+
+    s = '\n'.join(['\t'.join([str(ix), x, x.split(' ')[0], o.lower().replace(' ', '_')]) for ix, (x, o) in enumerate(zip(d_names, devices))])
     return f"""CREATE TABLE device_map (
     id smallint primary key,
-    device_name varchar(128)
+    device_name varchar(128),
+    manufacturer varchar(128),
+    clean_name varchar(128)
 );
 create unique index mapping_id on device_map(id);
-COPY device_map (id, device_name) FROM stdin;
+COPY device_map (id, device_name, manufacturer, clean_name) FROM stdin;
 {s}
 \.
 """

@@ -45,7 +45,7 @@ class ResultSorter:
 
     def add_base(self, sig_base:iots.SignatureBase, order_df:pd.DataFrame):
         order = []
-        order_dict = {name:id for id, name in zip(order_df['id'], order_df['device_name'])}
+        order_dict = {name:id for id, name in zip(order_df['id'], order_df['clean_name'])}
         for sig in sig_base.signatures:
             name = clean_str(sig.name)
             order.append(order_dict[name])
@@ -196,7 +196,7 @@ def real_fake_data():
         k = random.randint(0, n_devices)
         probes = random.choices(exp_base.signatures, k = k)
         ind = predict_signatures(sql, verification_base, probes, sorter, features, ind)
-        time.sleep(1)
+        # time.sleep(1)
 
 
 if __name__ == '__main__':
