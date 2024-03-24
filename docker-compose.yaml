@@ -39,5 +39,6 @@ services:
     container_name: data
     volumes:
       - ./scripts:/scripts
+      - ./:/pcaps
     build:
       dockerfile: "./scriptsDockerfile"
