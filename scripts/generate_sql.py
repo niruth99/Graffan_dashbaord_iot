@@ -81,7 +81,7 @@ final_sql = f"""
 {device_mapping()}
 
 CREATE TABLE public.data (
-    probe_id bigint primary key,
+    probe_id bigint primary key GENERATED ALWAYS AS IDENTITY,
     detected_on timestamp without time zone,
     device character varying(256),
     score real[],

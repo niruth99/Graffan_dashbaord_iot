@@ -135,7 +135,6 @@ def predict_signatures(sql:SQLInterface,
                        probes:'list[iots.Signature]',
                        sorter: ResultSorter,
                        features:'list[str]',
-                       ind:int
                        ) -> int:
     """
         Key function to predict then commit results to db
@@ -145,15 +144,46 @@ def predict_signatures(sql:SQLInterface,
     for p in probes:
         r = predict_sort(ver_base, p, sorter, features)
         r['device'] = p.name
-        r['probe_id'] = ind
         r['detected_on'] = time.time()
         res.append(r)
-        ind += 1
     if len(res) > 0:
         df = pd.DataFrame(res)
         df['detected_on'] = pd.to_datetime(df['detected_on'], unit='s')
         proccess_upload(sql, df, features)
-    return ind
+    return
+
+def _init():
+    sql = SQLInterface()
+
+    # Grab device map to ensure that results array are in correct order
+    order_df = sql.execute_pd('select * from device_map order by id')
+    # Grab available features for easier iteration, even when feature is not present in probe
+    features = sql.execute_pd('select * from available_features')['feature_name'].to_list()
+    # Get highest unused probe_id
+    data_max = sql.execute_pd('select max(probe_id) from data;')
+
+    files = [
+        './db/validation_sigs.json',
+        './db/filterd_weighted_sig.json',
+        './db/signed_db_pcap.json',
+        './db/signed_data.json'
+    ] # can ignre signed_db_pcap.json
+
+    stats = attr_stats.calculate_attr_stats(files)
+    verification_base = iots.SignatureBase(stats, path = r'./db/validation_sigs.json', path2=r'./db/validation_sigs_weighted.json')
+    verification_base.load()
+
+    sorter = ResultSorter()
+    sorter.add_base(verification_base, order_df)
+
+    res = {
+        'sql':sql,
+        'verification_base': verification_base,
+        'sorter': sorter,
+        'features': features
+    }
+
+    return res
 
 
 def real_fake_data():
@@ -167,14 +197,6 @@ def real_fake_data():
     # Grab available features for easier iteration, even when feature is not present in probe
     features = sql.execute_pd('select * from available_features')['feature_name'].to_list()
     # Get highest unused probe_id
-    data_max = sql.execute_pd('select max(probe_id) from data;')
-
-    print(f'Starting from ind: {data_max}')
-    if data_max['max'][0] is None:
-        ind = 0
-    else:
-        ind = data_max['max'][0] + 1
-
     files = [
         './db/validation_sigs.json',
         './db/filterd_weighted_sig.json',
@@ -195,7 +217,7 @@ def real_fake_data():
     while True:
         k = random.randint(0, n_devices)
         probes = random.choices(exp_base.signatures, k = k)
-        ind = predict_signatures(sql, verification_base, probes, sorter, features, ind)
+        predict_signatures(sql, verification_base, probes, sorter, features)
         # time.sleep(1)
 
 
