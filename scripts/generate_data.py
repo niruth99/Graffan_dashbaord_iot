@@ -89,26 +89,45 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     
     return results
 
+def float_close(f1, f2, d:0.001):
+    return (f1 - f2) < d 
+
 def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
     """
         Given a dataframe of results and list of features,
         upload dataframe to SQL server
     """
     data_features = [
-        'probe_id',
         'detected_on',
         'device',
         'score',
         'best_device',
     ]
+    rows, cols = df.shape
     score_breakdown = ['probe_id']
     [score_breakdown.extend([f'{f}_weight', f'{f}_match']) for f in features]
     data_features = df[data_features]
     sql.insert_pd(data_features, 'data')
 
-    rows, cols = df.shape
+    dt = df['detected_on'][0].isoformat()
 
-    probe_ids = df['probe_id'].to_list()
+    probe_id_df = sql.execute_pd(f""" select probe_id, score from data where detected_on = {dt}""")
+
+    probe_ids = []
+    n_scores = len(df['score'][0][0])
+
+    for x in range(rows):
+        for y in range(rows):
+            for z in range(n_scores):
+                if not float_close(df['score'][x][z], probe_id_df['score'][y][z]):
+                    break
+            if z == (n_scores - 1):
+                probe_ids.append(probe_id_df['probe_id'][y])
+            else:
+                probe_ids.append(0)
+                print('bad!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+    # probe_ids = df['probe_id'].to_list()
 
     d = {
         'probe_id': [],
