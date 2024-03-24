@@ -39,6 +39,6 @@ services:
     container_name: data
     volumes:
       - ./scripts:/scripts
-      - ./:/pcaps
+      - ./wild_data:/pcaps
     build:
-      dockerfile: "./scriptsDockerfile"
+      dockerfile: "./liveDockerfile"
