@@ -104,8 +104,6 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
         'best_device',
     ]
     rows, cols = df.shape
-    score_breakdown = ['probe_id']
-    [score_breakdown.extend([f'{f}_weight', f'{f}_match']) for f in features]
     data_features = df[data_features]
     sql.insert_pd(data_features, 'data')
 
@@ -128,6 +126,9 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
                 print('bad!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
     # probe_ids = df['probe_id'].to_list()
+
+    score_breakdown = ['probe_id']
+    [score_breakdown.extend([f'{f}_weight', f'{f}_match']) for f in features]
 
     d = {
         'probe_id': [],
