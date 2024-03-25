@@ -122,9 +122,8 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
                     break
             if z == (n_scores - 1):
                 probe_ids.append(probe_id_df['probe_id'][y])
-            else:
-                probe_ids.append(0)
-                print('bad!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                break
+            
 
     # probe_ids = df['probe_id'].to_list()
 
