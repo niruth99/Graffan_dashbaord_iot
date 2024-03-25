@@ -89,7 +89,7 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     
     return results
 
-def float_close(f1, f2, d = 0.001):
+def float_close(f1, f2, d = 0.0001):
     return (f1 - f2) < d 
 
 def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
@@ -105,30 +105,34 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
     ]
     rows, cols = df.shape
     data_features = df[data_features]
-    sql.insert_pd(data_features, 'data')
+    # sql.insert_pd(data_features, 'data')
 
-    dt = df['detected_on'][0].isoformat()
+    # dt = df['detected_on'][0].isoformat()
 
-    probe_id_df = sql.execute_pd(f""" select probe_id, score from data where detected_on = '{dt}'""")
-    print(probe_id_df)
+    probe_ids = sql.insert_return_id(data_features, 'data').to_list()
+    # print(probe_id_df)
 
-    probe_ids = []
-    n_scores = len(df['score'][0])
+    # probe_ids = []
+    # n_scores = len(df['score'][0])
+    # counted = [False for x in range(rows)]
 
-    for x in range(rows):
-        for y in range(rows):
-            for z in range(n_scores):
-                if not float_close(df['score'][x][z], probe_id_df['score'][y][z]):
-                    break
-            if z == (n_scores - 1):
-                probe_ids.append(probe_id_df['probe_id'][y])
-                break
+    # for x in range(rows):
+    #     for y in range(rows):
+    #         if counted[y]: continue
+    #         for z in range(n_scores):
+    #             if not float_close(df['score'][x][z], probe_id_df['score'][y][z]):
+    #                 break
+    #         if z == (n_scores - 1):
+    #             probe_ids.append(probe_id_df['probe_id'][y])
+    #             counted[y] = True
+    #             break
             
 
     # probe_ids = df['probe_id'].to_list()
 
     score_breakdown = ['probe_id']
     [score_breakdown.extend([f'{f}_weight', f'{f}_match']) for f in features]
+    print(probe_ids)
 
     d = {
         'probe_id': [],

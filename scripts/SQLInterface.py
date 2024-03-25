@@ -75,3 +75,29 @@ class SQLInterface:
 
         for row in data:
             self.execute(base_query, [process_value(v) for v in row])
+
+    def insert_return_id(self, df:pd.DataFrame, name:str) -> pd.Series:
+        """
+            Special function for inserting into function,
+            includes returning to track probe_id
+        """
+        self.check_connect()
+        d = df.to_dict('split')
+        columns, data = d['columns'], d['data']
+
+        base_query = f"insert into {name}({','.join(columns)}) values ({','.join(['%s']*len(columns))}) returning probe_id;"
+
+        def process_value(value):
+            """
+                Ensure value can be accepted by postgres
+            """
+            if isinstance(value, pd.Timestamp):
+                return value.isoformat()
+            return value
+
+        res = []
+
+        for row in data:
+            res.append(self.execute_pd(base_query, [process_value(v) for v in row]))
+
+        return pd.concat(res)['probe_id']
