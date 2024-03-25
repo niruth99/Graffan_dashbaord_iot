@@ -89,7 +89,7 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     
     return results
 
-def float_close(f1, f2, d:0.001):
+def float_close(f1, f2, d = 0.001):
     return (f1 - f2) < d 
 
 def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
