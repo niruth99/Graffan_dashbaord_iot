@@ -31,8 +31,10 @@ def work(pipe:connection.Connection):
         )
 
 def read_pcap(folder:str) -> list[Signature]:
-    onlyfiles = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(f)]
+    # onlyfiles = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(f)]
     signature_list = []
+
+    onlyfiles = [folder]
 
     for f in onlyfiles:
         cap = sc.rdpcap(f)
@@ -57,12 +59,18 @@ def main(folder:str, interval:float, threads:float):
     with Pool(threads) as pool:
         pool.map(work, read_pipes)
         while True:
-            unread = os.listdir(folder)
+            unread = [os.path.join(folder, f) for f in os.listdir(folder)]
+            x = []
+
+            for u in unread:
+                for f in os.listdir(unread):
+                    x.append(os.path.join(u, f))
 
             res = []
 
             for f in unread:
                 res.extend(read_pcap(f))
+                os.remove(f)
             
             # Split into threads
             for x in range(threads):
