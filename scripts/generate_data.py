@@ -109,7 +109,7 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
 
     dt = df['detected_on'][0].isoformat()
 
-    probe_id_df = sql.execute_pd(f""" select probe_id, score from data where detected_on = {dt}""")
+    probe_id_df = sql.execute_pd(f""" select probe_id, score from data where detected_on = '{dt}'""")
 
     probe_ids = []
     n_scores = len(df['score'][0][0])
