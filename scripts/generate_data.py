@@ -162,10 +162,11 @@ def predict_signatures(sql:SQLInterface,
         See `real_fake_data()` for `sorter`, `sql`, and `features` init
     """
     res = []
+    t = time.time()
     for p in probes:
         r = predict_sort(ver_base, p, sorter, features)
         r['device'] = p.name
-        r['detected_on'] = time.time()
+        r['detected_on'] = t
         res.append(r)
     if len(res) > 0:
         df = pd.DataFrame(res)
