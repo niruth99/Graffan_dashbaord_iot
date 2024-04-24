@@ -9,6 +9,7 @@ services:
     user: '0'
     environment:
      - GF_SERVER_ROOT_URL=http://my.grafana.server/
+     - GF_INSTALL_PLUGINS=volkovlabs-variable-panel, volkovlabs-form-panel
     ports:
       - '3000:3000'
     # adding the mount volume point which we create earlier

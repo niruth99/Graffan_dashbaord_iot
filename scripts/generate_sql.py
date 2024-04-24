@@ -80,12 +80,21 @@ COPY available_features (feature_name) FROM stdin;
 final_sql = f"""
 {device_mapping()}
 
+create TABLE site_map (
+    id smallint primary key GENERATED ALWAYS AS IDENTITY,
+    name character varying(256),
+    lon numeric(12, 9),
+    lat numeric(12, 9)
+);
+
 CREATE TABLE public.data (
     probe_id bigint primary key GENERATED ALWAYS AS IDENTITY,
     detected_on timestamp without time zone,
     device character varying(256),
     score real[],
-    best_device smallint references device_map(id)
+    best_device smallint references device_map(id),
+    site_id smallint references site_map(id),
+    s_db real
 );
 
 CREATE TABLE score_breakdown (

@@ -444,7 +444,10 @@ class Signature:
                         match = 0
                         total_sw +=(weight*match)
                         total_w += weight
-                
+
+                        
+                    if match > 0.0001:
+                        match, weight = (0,0)
                     output_dictinoary[key] = (match, weight)
                     output_list.append((match, weight))
 

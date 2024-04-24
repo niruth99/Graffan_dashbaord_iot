@@ -102,6 +102,8 @@ def proccess_upload(sql:SQLInterface, df:pd.DataFrame, features:'list[str]'):
         'device',
         'score',
         'best_device',
+        'site_id',
+        's_db'
     ]
     rows, cols = df.shape
     data_features = df[data_features]
@@ -159,6 +161,7 @@ def predict_signatures(sql:SQLInterface,
                        probes:'list[iots.Signature]',
                        sorter: ResultSorter,
                        features:'list[str]',
+                       site_id:int
                        ) -> int:
     """
         Key function to predict then commit results to db
@@ -170,6 +173,8 @@ def predict_signatures(sql:SQLInterface,
         r = predict_sort(ver_base, p, sorter, features)
         r['device'] = p.name
         r['detected_on'] = t
+        r['s_db'] = p.strength
+        r['site_id'] = site_id
         res.append(r)
     if len(res) > 0:
         df = pd.DataFrame(res)

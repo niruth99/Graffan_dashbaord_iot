@@ -1,5 +1,6 @@
 import sys
 import traceback
+import pandas as pd
 import scapy.all as sc
 import os
 
@@ -8,13 +9,14 @@ import time
 from generate_data import _init, predict_signatures
 from multiprocessing import Pipe, Pool, Process, Queue, connection
 from iotsignature import Signature
+from SQLInterface import SQLInterface
 
 def ignore(*args, **kwargs):
     pass
 
 # print = ignore
 
-def work(unread_queue:Queue, read_queue:Queue):
+def work(unread_queue:Queue, read_queue:Queue, site_id:int):
     i = _init()
     sql = i['sql']
     verification_base = i['verification_base']
@@ -33,13 +35,14 @@ def work(unread_queue:Queue, read_queue:Queue):
                     signatures, 
                     sorter,
                     features,
+                    site_id
                 )
                 read_queue.put(u)
         except:
             traceback.print_exc()
         # sys.stdout.flush()
 
-def read_pcap(folder:str) -> list[Signature]:
+def read_pcap(folder:str) -> 'list[Signature]':
     # onlyfiles = [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(f)]
     signature_list = []
 
@@ -47,22 +50,44 @@ def read_pcap(folder:str) -> list[Signature]:
 
     for f in onlyfiles:
         cap = sc.rdpcap(f)
-        for index, frame in enumerate(cap):
+        for frame in cap:
             if (frame.haslayer(sc.Dot11Elt) and frame[sc.Dot11Elt].ID == 0 and frame[sc.Dot11Elt].info == b''):
                 mac = frame.addr2
                 signature = Signature(name = mac)
                 signing_status = signature.sign(frame)
+                # Add signal strength
+                signature.strength = frame.dBm_AntSignal
                 if signing_status:
                     signature_list.append(signature)
     return signature_list
 
-def main(folder:str, interval:float, threads:float):
+def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitename):
     last_read = time.time()
     
     unread_queue = Queue()
     read_queue = Queue()
 
-    processes = [Process(target = work, args = [unread_queue, read_queue]) for p in range(threads)]
+    sql = SQLInterface()
+    acc = 0.000001 # Equal to x decimal points, 5dp -> ~1m error
+    r = sql.execute_pd(f'select * from site_map where abs(lon - {lon}) < {acc} and abs(lat - {lat}) < {acc}')
+    rows, _ = r.shape
+    if rows == 0:
+        print('Not found in site_map, creating new site')
+        df = pd.DataFrame([{'lon':lon, 'lat':lat}])
+        r = sql.insert_return_id(df, 'site_map', returning='id')
+        if sitename == None:
+            sitename = f'Site {r[0]}'
+        sql.execute(f'update site_map set name = \'{sitename}\' where id = {r[0]}')
+        print(f'Create new site: id = {r[0]} ({sitename})')
+    else:
+        print(f'Reusing siteid: {r["id"][0]}, {r["name"][0]}')
+        r = r['id']
+    sql.commit()
+    sql.close()
+
+    site_id = r[0]
+
+    processes = [Process(target = work, args = [unread_queue, read_queue, site_id]) for p in range(threads)]
     [p.start() for p in processes]
     # with Pool(threads) as pool:
     #     pool.map(work, read_pipes)
@@ -103,44 +128,6 @@ def main(folder:str, interval:float, threads:float):
         last_read = time.time()
         sys.stdout.flush()
         time.sleep(interval-(time.time() - last_read))
-    
-    # while True:
-    #     unread = [os.path.join(folder, f) for f in os.listdir(folder)]
-    #     x = []
-
-    #     for u in unread:
-    #         for f in os.listdir(u):
-    #             print(f)
-    #             if f.endswith('pcap'):
-    #                 x.append(os.path.join(u, f))
-
-    #     res = []
-
-    #     for f in x:
-    #         print(f)
-    #         res.extend(read_pcap(f))
-    #         os.remove(f)
-        
-    #     i = _init()
-    #     sql = i['sql']
-    #     verification_base = i['verification_base']
-    #     sorter = i['sorter']
-    #     features = i['features']
-
-    #     predict_signatures(
-    #         sql,
-    #         verification_base,
-    #         res, 
-    #         sorter,
-    #         features,
-    #     )
-    #     # Split into threads
-    #     # for x in range(threads):
-    #     #     wp = write_pipes[x]
-    #     #     wp.put(res[x::threads])
-        
-    #     last_read = time.time()
-    #     time.sleep(interval-(time.time() - last_read))
 
 
 if __name__ == '__main__':
@@ -148,6 +135,10 @@ if __name__ == '__main__':
     argument_parser.add_argument('-s', '--source', type=str, required=True ,help="Source folder")
     argument_parser.add_argument('-i', '--interval',type=float, required=False ,help="How often to read source folder", default = 0.1)
     argument_parser.add_argument('-t', '--threads',type=float, required=False ,help="Number of threads", default = os.cpu_count() - 1)
+    argument_parser.add_argument('-lon', '--longitude',type=float, required=False ,help="Latitude of site", default = 0)
+    argument_parser.add_argument('-lat', '--latitude',type=float, required=False ,help="Longitude of site", default = 0)
+    argument_parser.add_argument('-n', '--sitename',type=float, required=False ,help="Name of site", default = None)
+
 
     args = argument_parser.parse_args()
-    main(args.source, args.interval, args.threads)
+    main(args.source, args.interval, args.threads, args.longitude, args.latitude, args.sitename)
