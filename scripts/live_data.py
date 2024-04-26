@@ -69,7 +69,18 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
 
     sql = SQLInterface()
     acc = 0.000001 # Equal to x decimal points, 5dp -> ~1m error
-    r = sql.execute_pd(f'select * from site_map where abs(lon - {lon}) < {acc} and abs(lat - {lat}) < {acc}')
+    r = None
+    for x in range(5):
+        try:
+            r = sql.execute_pd(f'select * from site_map where abs(lon - {lon}) < {acc} and abs(lat - {lat}) < {acc}')
+            break
+        except:
+            traceback.print_exc()
+            print('Error... Retrying in 5 seconds')
+            time.sleep(5)
+    if r == None:
+        print('Looks like we failed an init query, is the server running? (Exiting...)')
+        exit()
     rows, _ = r.shape
     if rows == 0:
         print('Not found in site_map, creating new site')
