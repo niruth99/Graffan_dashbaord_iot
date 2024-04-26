@@ -105,7 +105,7 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
                 file = os.path.join(sub_f, file)
                 if file.endswith('pcap') and (file not in read_files):
                     unread.append(file)
-                    read_files.add(file)
+                    # read_files.add(file)
         
         # Evenly spread load to threads
         # for x in range(threads):
