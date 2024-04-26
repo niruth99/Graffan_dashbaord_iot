@@ -3,4 +3,4 @@ WORKDIR /scripts
 COPY ./scripts/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 ENV TZ="Australia/Sydney"
-CMD ["python3", "live_data.py", "-s", "pcaps"]
+CMD ["python3", "live_data.py", "-s", "/pcaps"]
