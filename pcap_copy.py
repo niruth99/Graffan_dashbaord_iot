@@ -1,26 +1,25 @@
-import shutil
-import time
 import os
-import random
+import time
+import shutil
 
-# Randomly selects a pcap file to copy to dest
+folders = [
+    '/home/g/Desktop/tshark_data_capture/09-34-41',
+    '/home/g/Desktop/tshark_data_capture/09-23-59'
+]       
 
-# Specify the folder path
-folder_path = '/path/to/folder'
-dest_path = '/path/to/dest'
+files = []
 
-# List all files in the folder
+for f in folders:
+    for file in os.listdir(f):
+        if file.endswith('pcap'):
+            files.append(os.path.join(f, file))
 
-# Copy the file
-
-files = os.listdir(folder_path)
-i = 0
-
+ind = 0
 while True:
-    f = random.randint(len(files))
-    f = files[f]
-    source_file = os.path.join(folder_path, f)
-    dest_name = os.path.join(dest_path, f'{i}.pcap')
-    shutil.copy(source_file, dest_name)
-    i += 1
-    time.sleep(3)
+    os.listdir
+    for x in files:
+        print(x)
+        shutil.copy(x, f'./wild_data/09-23-59/{ind}.pcap')
+        time.sleep(1)
+        ind += 1
+    # time.sleep(5)
