@@ -104,6 +104,8 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
     #     pool.map(work, read_pipes)
     read_files = set()
     while True:
+        # Don't track repeat file names
+        read_files = set()
 
         unread = []
         
@@ -116,7 +118,7 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
                 file = os.path.join(sub_f, file)
                 if file.endswith('pcap') and (file not in read_files):
                     unread.append(file)
-                    # read_files.add(file)
+                    read_files.add(file)
         
         # Evenly spread load to threads
         # for x in range(threads):
