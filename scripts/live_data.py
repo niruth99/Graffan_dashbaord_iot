@@ -109,7 +109,7 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
     read_files = set()
     while True:
         # Don't track repeat file names
-        read_files = set()
+        # read_files = set()
 
         unread = []
         
