@@ -51,14 +51,18 @@ def read_pcap(folder:str) -> 'list[Signature]':
     for f in onlyfiles:
         cap = sc.rdpcap(f)
         for frame in cap:
-            if (frame.haslayer(sc.Dot11Elt) and frame[sc.Dot11Elt].ID == 0 and frame[sc.Dot11Elt].info == b''):
-                mac = frame.addr2
-                signature = Signature(name = mac)
-                signing_status = signature.sign(frame)
-                # Add signal strength
-                signature.strength = frame.dBm_AntSignal
-                if signing_status:
-                    signature_list.append(signature)
+            try:
+                if (frame.haslayer(sc.Dot11Elt) and frame[sc.Dot11Elt].ID == 0 and frame[sc.Dot11Elt].info == b''):
+                    mac = frame.addr2
+                    signature = Signature(name = mac)
+                    signing_status = signature.sign(frame)
+                    # Add signal strength
+                    signature.strength = frame.dBm_AntSignal
+                    if signing_status:
+                        signature_list.append(signature)
+            except:
+                print("Couldn't read frame :(")
+                pass
     return signature_list
 
 def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitename):
