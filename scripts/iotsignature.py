@@ -4,7 +4,13 @@ import json
 import requests
 from bs4 import BeautifulSoup as bs4
 import sys
-print = lambda x:x
+
+
+def ignore(*args, **kwargs):
+    pass
+
+
+print = ignore
 
 class Signature:
     def __init__(self, **kwargs):

@@ -51,14 +51,18 @@ def read_pcap(folder:str) -> 'list[Signature]':
     for f in onlyfiles:
         cap = sc.rdpcap(f)
         for frame in cap:
-            if (frame.haslayer(sc.Dot11Elt) and frame[sc.Dot11Elt].ID == 0 and frame[sc.Dot11Elt].info == b''):
-                mac = frame.addr2
-                signature = Signature(name = mac)
-                signing_status = signature.sign(frame)
-                # Add signal strength
-                signature.strength = frame.dBm_AntSignal
-                if signing_status:
-                    signature_list.append(signature)
+            try:
+                if (frame.haslayer(sc.Dot11Elt) and frame[sc.Dot11Elt].ID == 0 and frame[sc.Dot11Elt].info == b''):
+                    mac = frame.addr2
+                    signature = Signature(name = mac)
+                    signing_status = signature.sign(frame)
+                    # Add signal strength
+                    signature.strength = frame.dBm_AntSignal
+                    if signing_status:
+                        signature_list.append(signature)
+            except:
+                print("Couldn't read frame :(")
+                pass
     return signature_list
 
 def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitename):
@@ -69,7 +73,18 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
 
     sql = SQLInterface()
     acc = 0.000001 # Equal to x decimal points, 5dp -> ~1m error
-    r = sql.execute_pd(f'select * from site_map where abs(lon - {lon}) < {acc} and abs(lat - {lat}) < {acc}')
+    r = None
+    for x in range(5):
+        try:
+            r = sql.execute_pd(f'select * from site_map where abs(lon - {lon}) < {acc} and abs(lat - {lat}) < {acc}')
+            break
+        except:
+            traceback.print_exc()
+            print('Error... Retrying in 5 seconds')
+            time.sleep(5)
+    if r is None:
+        print('Looks like we failed an init query, is the server running? (Exiting...)')
+        exit()
     rows, _ = r.shape
     if rows == 0:
         print('Not found in site_map, creating new site')
@@ -93,6 +108,8 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
     #     pool.map(work, read_pipes)
     read_files = set()
     while True:
+        # Don't track repeat file names
+        # read_files = set()
 
         unread = []
         
