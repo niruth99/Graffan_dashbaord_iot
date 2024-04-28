@@ -78,7 +78,7 @@ def main(folder:str, interval:float, threads:float, lon:float, lat:float, sitena
             traceback.print_exc()
             print('Error... Retrying in 5 seconds')
             time.sleep(5)
-    if r == None:
+    if r is None:
         print('Looks like we failed an init query, is the server running? (Exiting...)')
         exit()
     rows, _ = r.shape
