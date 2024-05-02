@@ -40,7 +40,7 @@ def device_name_map(dev_name:str):
 def device_mapping():
     d_names = [device_name_map(d) for d in devices]
 
-    s = '\n'.join(['\t'.join([str(ix), x, x.split(' ')[0], o.lower().replace(' ', '_')]) for ix, (x, o) in enumerate(zip(d_names, devices))])
+    s = '\n'.join(['\t'.join([str(ix + 1), x, x.split(' ')[0], o.lower().replace(' ', '_')]) for ix, (x, o) in enumerate(zip(d_names, devices))])
     return f"""CREATE TABLE device_map (
     id smallint primary key,
     device_name varchar(128),

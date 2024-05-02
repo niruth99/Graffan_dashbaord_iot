@@ -1,4 +1,5 @@
 from __future__ import annotations
+import traceback
 import scapy.all as sc
 import json
 import requests
@@ -9,8 +10,9 @@ import sys
 def ignore(*args, **kwargs):
     pass
 
-
+print1 = print
 print = ignore
+
 
 class Signature:
     def __init__(self, **kwargs):
@@ -452,14 +454,16 @@ class Signature:
                         total_w += weight
 
                         
-                    if match > 0.0001:
+                    if match < 0.0001:
                         match, weight = (0,0)
                     output_dictinoary[key] = (match, weight)
                     output_list.append((match, weight))
+                    # print1()
 
                 except KeyError as e:
-                    # print('key erro {}'.format(e))
-                    output_dictinoary[key] = (0, weight)
+                    # traceback.print_exc()
+                    # print1('key erro {}'.format(e))
+                    # output_dictinoary[key] = (0, weight)
                     output_list.append((0, weight))
                 
             # print('total_sw {}'.format(total_sw))
@@ -468,6 +472,9 @@ class Signature:
             # print('weighted_avg {}'.format(weighted_avg))
 
             if expand:
+                print1(output_dictinoary)
+                print1(weighted_avg)
+                print1(total_sw, total_w)
                 return output_dictinoary, weighted_avg
             else:
                 return output_list, weighted_avg

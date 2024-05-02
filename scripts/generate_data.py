@@ -48,7 +48,8 @@ class ResultSorter:
         order_dict = {name:id for id, name in zip(order_df['id'], order_df['clean_name'])}
         for sig in sig_base.signatures:
             name = clean_str(sig.name)
-            order.append(order_dict[name])
+            # Add index to `order`, index starts at 1
+            order.append(order_dict[name] - 1)
         self.order[sig_base] = order
 
     def sorter(self, sig_base:iots.SignatureBase):
