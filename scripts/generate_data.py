@@ -18,7 +18,7 @@ def match_wp(ver_sig:iots.Signature,
              ver_sig_wt:iots.Signature,
              test_sig:iots.Signature,
              lambda_:float = 2.1,
-             key_match:str = 'union'
+             key_match:str = 't3'
              ) -> dict:
     """
         (
@@ -86,7 +86,8 @@ def predict_sort(ver_base:iots.SignatureBase, exp_sig:iots.Signature, sorter: Re
     for k, v in results.items():
         results[k] = [v[ind] for ind in order]
 
-    results['best_device'] = order[best_device]
+    # Because of SQL indexing
+    results['best_device'] = order[best_device] + 1
     
     return results
 

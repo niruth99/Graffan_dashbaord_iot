@@ -51,7 +51,7 @@ class Signature:
         signature:dict[str: Signature] = {}
 
         # extracting hidden layers
-        for i in range(1,100):
+        for i in range(5,100):
             try:
                 temp = frame[i]
                 if temp.ID == 45:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
@@ -81,7 +81,7 @@ class Signature:
                     signature['Mesh ID'] = self.__convert_info(temp.info)
                 
                 
-                elif temp.ID in [0,3]:
+                elif temp.ID in [0,3, 127]:
                     # TAG ID 0 corresponds to SSID wildcard. (DEPENDS on the associated router, cannot take to signature)
                     # TAG ID 3 corresponds to CURRENT CHANNEL. (DEPENDS on the channel, cannot take it to signature)
                     pass
@@ -91,8 +91,6 @@ class Signature:
             except IndexError:
                 # the breaking condition is to find the ending layer of the frame
                 break
-            except Exception as e:
-                continue
 
         return signature
 
@@ -249,8 +247,7 @@ class Signature:
                     temp.append(match_function(item1, item2))
             return max(temp)
 
-    def sign(self, pcap_file, ignore_ssid = False,only_wildcad= True):
-        
+    def sign(self, pcap_file, ignore_ssid = False):
         """
         DOCSTRING: this function will sign the empty signature using the PCAP dump given
         pcap_file:  1) location of the pcap file    OR 
@@ -280,19 +277,13 @@ class Signature:
                 return False
                 
             elif isinstance(pcap_file, sc.RadioTap):
-                if only_wildcad:
-                    if (pcap_file.haslayer(sc.Dot11Elt) and pcap_file[sc.Dot11Elt].ID == 0 and pcap_file[sc.Dot11Elt].info == b'') or ignore_ssid:
-                        self.signature = self.__extract_signature(pcap_file)
-                        return True
-                    
-                    else:
-                        print("The given frame is not SSID wildcard frame")
-                        self.signature = None
-                        return False
-                if not only_wildcad:
-                    if pcap_file.haslayer(sc.Dot11ProbeReq) or ignore_ssid:
-                        self.signature = self.__extract_signature(pcap_file)
-                        return True
+                if (pcap_file.haslayer(sc.Dot11Elt) and pcap_file[sc.Dot11Elt].ID == 0 and pcap_file[sc.Dot11Elt].info == b'') or ignore_ssid:
+                    self.signature = self.__extract_signature(pcap_file)
+                    return True
+                else:
+                    print("The given frame is not SSID wildcard frame")
+                    self.signature = None
+                    return False
                 
             
         except FileNotFoundError:
@@ -312,8 +303,6 @@ class Signature:
         expand: if this is true, the function will output a descreptive score dictionary
         return: the matching scores
         """
-
-        keys_set = ['ht','vendor_specific','extended']
         if isinstance(sign_frame, Signature):
             # in case of FRAME -> Signature() instance
             temp_signature = sign_frame.signature
@@ -331,9 +320,6 @@ class Signature:
             # keys = set(self.signature.keys()).union(temp_signature.keys())
             if key_match == 'union':
                 keys = set(self.signature.keys()).union(temp_signature.keys())
-            elif key_match == 't3':
-                all_keys = set(self.signature.keys()).union(temp_signature.keys())
-                keys = {key for key in all_keys if key in keys_set}
             else:
                 keys = set(self.signature.keys()).intersection(temp_signature.keys()) 
                         
@@ -402,90 +388,13 @@ class Signature:
 
    ### new match function
 
-    def calc_score(self,temp_signature,signatures_wt,keys,lambda_=2.1)-> tuple(float, dict, list): # type: ignore
-         
-        output_dictinoary = {}   # decreptive dictionary is this
-        output_list = []   
-        total_sw,total_w = 0,0
-
-        for key in keys:
-                try:
-                    if (key in self.signature) and (key in temp_signature):
-                        print('bt sigs keys')
-                        weight = self.gamma(key, self.signature[key], temp_signature[key], lambda_= lambda_ )
-                        match = self.__match_list(self.signature[key], temp_signature[key], match_function=self.jaccard_similarity)
-                        prob_occ = None
-                        print('here')
-                        print(temp_signature[key])
-                        print(signatures_wt.signature)
-                        if str(temp_signature[key]) in signatures_wt.signature[key]['attrs']:
-                            print('h2')
-                            prob_occ = signatures_wt.signature[key]['attrs'][str(temp_signature[key])]
-                        if prob_occ:
-                            print('h3')
-                            weight = weight*signatures_wt.signature[key]['weight'] *prob_occ
-                        else:
-                            print('h4')
-                            weight = weight*signatures_wt.signature[key]['weight'] 
-                        print('h5')
-                        total_sw +=(weight*match)
-                        total_w += weight
-                        print(key,total_sw,total_w)
-                    elif key in self.signature:
-                        weight = self.gamma(key, self.signature[key], 'null', lambda_= lambda_)
-                        match = 0
-                        # weight = weight*signatures_wt.signature[key]['weight'] 
-                        # prob_occ = None
-              
-                        # if str(temp_signature[key]) in signatures_wt.signature[key]['attrs']:
-                        #     prob_occ = signatures_wt.signature[key]['attrs'][str(temp_signature[key])]
-                        # if prob_occ:
-                        #     weight = weight*signatures_wt.signature[key]['weight'] *prob_occ
-                        # else:
-                        weight = weight*signatures_wt.signature[key]['weight'] 
-                        total_sw +=(weight*match)
-                        total_w += weight 
-                    elif key in temp_signature:
-                        weight = self.gamma(key, 'null', temp_signature[key], lambda_= lambda_)
-                        # weight = weight*signatures_wt.signature[key]['weight']
-                        # prob_occ = None
-                        # if str(temp_signature[key]) in signatures_wt.signature[key]['attrs']:
-                        #     prob_occ = signatures_wt.signature[key]['attrs'][str(temp_signature[key])]
-                        # if prob_occ:
-                        #     weight = weight*signatures_wt.signature[key]['weight'] *prob_occ
-                        # else:
-                        #     weight = weight*signatures_wt.signature[key]['weight'] 
-                        match = 0
-                        total_sw +=(weight*match)
-                        total_w += weight
-                    else:
-                        weight = self.gamma(key, 'null', 'null', lambda_= lambda_)
-                       
-                        match = 0
-                        total_sw +=(weight*match)
-                        total_w += weight
-                        
-                
-                    output_dictinoary[key] = (match, weight)
-                    output_list.append((match, weight))
-                except KeyError as e:
-                    output_dictinoary[key] = (0, weight)
-                    output_list.append((0, weight))
-        
-        if total_w > 0.001:
-            weighted_avg = round(total_sw / total_w, 5)
-        else:
-            weighted_avg = 0
-
-
-        return weighted_avg, output_dictinoary, output_list
     def match_wp(
             self,
             sign_frame: Signature,
             expand = False,
             weighted = True,
             lambda_ = 5,
-            key_match = 't3',
+            key_match = 'union',
             signatures_wt:Signature = None
         ):
 
@@ -496,63 +405,29 @@ class Signature:
             temp_signature = sign_frame
         else:
             temp_signature = self.__extract_signature(sign_frame) # extracting the signature of the frame
-        
-
-        output_dictinoary = {}   # decreptive dictionary is this
-        output_list = []   
-        keys_set = ['ht','vendor_specific','extended']
+            
         try:
             if key_match == 'union':
                 keys = set(self.signature.keys()).union(temp_signature.keys())
-            elif key_match == 't3':
-                keys = set(self.signature.keys()).union(temp_signature.keys())
-                # keys = {key for key in all_keys if key in keys_set}
-                # if not keys:
-                #     return 0, 0
-            if key_match == 'intersection':
+            else:
                 keys = set(self.signature.keys()).intersection(temp_signature.keys()) 
                         
             if not len(keys):
                 print(f"CHECK {self.name} and {temp_name}")
                 return 0, 0
-            total_sw,total_w = 0,0
 
-            if key_match == 't3':
-                print('t3 match')
-                int_keys  = set(self.signature.keys()).intersection(temp_signature.keys()) 
-                t3_keys =  {key for key in int_keys if key in keys_set}
-                if not len(t3_keys):
-                    print(keys)
-                    u_socre, d1, il = self.calc_score(temp_signature,signatures_wt,keys,lambda_)
-                    i_score, d2, il = self.calc_score(temp_signature,signatures_wt,int_keys,lambda_)
-                    final_score = (i_score*0.9) + (u_socre*0.1)
-                    # final_score = i_score
-                    # print(u_socre,i_score,final_score)
-                    if expand:
-                        return d1, final_score
-                    return il, final_score
-                else:
-                    print(int_keys)
-                    # u_socre, _, il = self.calc_score(temp_signature,signatures_wt,keys,lambda_)
-                    t3_score, _, tl = self.calc_score(temp_signature,signatures_wt,int_keys,lambda_)
-                    # final_score = (t3_score*0.9) + (u_socre * 0.1)
-                    final_score = t3_score
-                    # print(t3_score,intersect_score,final_score)
-                    if expand:
-                        return _, final_score
-                    return  tl, final_score
+            output_dictinoary = {}   # decreptive dictionary is this
+            output_list = []         # matching scores will append to this (not descreptive)
+
+            total_sw,total_w = 0,0
+            # print(keys)
             for key in keys:
                 try:
                     if (key in self.signature) and (key in temp_signature):
                         weight = self.gamma(key, self.signature[key], temp_signature[key], lambda_= lambda_ )
                         match = self.__match_list(self.signature[key], temp_signature[key], match_function=self.jaccard_similarity)
-                        prob_occ = None
-                        if str(temp_signature[key]) in signatures_wt.signature[key]['attrs']:
-                            prob_occ = signatures_wt.signature[key]['attrs'][str(temp_signature[key])]
-                        if prob_occ:
-                            weight = weight*signatures_wt.signature[key]['weight'] *prob_occ
-                        else:
-                            weight = weight*signatures_wt.signature[key]['weight'] 
+                        
+                        weight = weight*signatures_wt.signature[key]['weight'] 
                         total_sw +=(weight*match)
                         total_w += weight
                     elif key in self.signature:
@@ -567,13 +442,13 @@ class Signature:
 
                     elif key in temp_signature:
                         weight = self.gamma(key, 'null', temp_signature[key], lambda_= lambda_)
-                        # weight = weight*signatures_wt.signature[key]['weight']
+                        weight = weight*signatures_wt.signature[key]['weight']
                         match = 0
                         total_sw +=(weight*match)
                         total_w += weight
                     else:
                         weight = self.gamma(key, 'null', 'null', lambda_= lambda_)
-                       
+                        weight = weight*signatures_wt.signature[key]['weight']
                         match = 0
                         total_sw +=(weight*match)
                         total_w += weight
@@ -593,10 +468,7 @@ class Signature:
                 
             # print('total_sw {}'.format(total_sw))
             # print('total_w {}'.format(total_w))
-            if total_w > 0.001:
-                weighted_avg = round(total_sw / total_w, 5)
-            else:
-                weighted_avg = 0
+            weighted_avg = round(total_sw / total_w, 5)
             # print('weighted_avg {}'.format(weighted_avg))
 
             if expand:
@@ -650,7 +522,7 @@ class Signature:
 ####################################################################################################
 
 class SignatureBase:
-    def __init__(self, stats, **kwargs):
+    def __init__(self, stats, signs:list[Signature] = [], path:str = '', **kwargs):
         """
         IMPORTANT: two keys can be given
                     1) signs: a list with Signature object inside it
@@ -662,21 +534,23 @@ class SignatureBase:
             with open(stats, 'r') as input_file:
                 self.stats = json.load(input_file)
 
-        try:
-            self.signatures = kwargs['signs']
-        except KeyError:
-            self.signatures = []
-            
-        try:
-            self.db_path = kwargs['path']
-        except KeyError:
-            self.db_path = ""
+        self.signatures: list[Signature] = signs
+        self.db_path:str = path
+
+        def load_kwarg(key, attr_name):
+            if key in kwargs:
+                self.__dict__[attr_name] = kwargs[key]
+
+
+        load_kwarg('signs', 'signatures')
+        load_kwarg('path', 'db_path')
+
         # adding signatues with probability of occurence for each sig attribute
-        try:
+        if 'path2' in kwargs:
             self.db2_path = kwargs['path2']
             self.signatures_wp = []
             self.weighted_database = {}
-        except KeyError:
+        else:
             self.db2_path = ''
 
         self.database = {}
@@ -812,7 +686,8 @@ class SignatureBase:
             print("BAD key!!!")
             return None
 
-    def predict(self, signature, lambda_ = 2.1, verbose = False,key_match='union',probability_occ = False,expand=False):
+
+    def predict(self, signature, lambda_ = 2.1, verbose = False,key_match='union',probability_occ = False):
 
         """
         DOCSTRING: this function will return the best machings from the database
@@ -822,23 +697,18 @@ class SignatureBase:
         for index,temp_signature in enumerate(self.signatures):
             if probability_occ:
                 # print(self.signatures_wp[index].name)
-                out, score = temp_signature.match_wp(signature, lambda_ = lambda_,key_match= key_match,signatures_wt=self.signatures_wp[index],expand=expand)
-            else:
-                out, score = temp_signature.match(signature, lambda_ = lambda_,key_match= key_match,expand=expand)
-            
-            if out == 0 and score == 0:
-                matches.append(['',0])
-            # matches.append([temp_signature.name, score,out])
-            else:
-                matches.append([temp_signature.name, score])
+                _, score = temp_signature.match_wp(signature, lambda_ = lambda_,key_match= key_match,signatures_wt=self.signatures_wp[index])
 
+            else:
+                _, score = temp_signature.match(signature, lambda_ = lambda_,key_match= key_match)
+            
+            matches.append([temp_signature.name, score])
 
         matches.sort(key = lambda x: x[1], reverse = True)
 
         if verbose:
             # return first 3 maching signatures
-            # return (matches[:3],out)
-            return matches[:5]
+            return matches[:3]
         else:
             return matches[0][0]
 
