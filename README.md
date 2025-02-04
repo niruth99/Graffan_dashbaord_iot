@@ -76,4 +76,15 @@ To cite the method and the tool, refer to the following paper:
      year={2024},
      organization={IEEE}
    }
+2. Bogahawatta, N., How, G., Karunanayake, Y., Seneviratne, S., Thilakarathna, K., Kanhere, S., Masood, R., & Seneviratne, A. (2024). Passive Identification of WiFi Devices in Real-Time. In Proceedings of the ACM SIGCOMM 2024 Conference: Posters and Demos (pp. 92-94).
+
+BibTeX:
+```bibtex
+@inproceedings{bogahawatta2024passive2,
+  title={Passive Identification of WiFi Devices in Real-Time},
+  author={Bogahawatta, Niruth and How, Gerry and Karunanayake, Yasiru and Seneviratne, Suranga and Thilakarathna, Kanchana and Kanhere, Salil and Masood, Rahat and Seneviratne, Aruna},
+  booktitle={Proceedings of the ACM SIGCOMM 2024 Conference: Posters and Demos},
+  pages={92--94},
+  year={2024}
+}
 
