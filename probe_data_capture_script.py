@@ -40,7 +40,6 @@ def change_mode(mode, iface):
 
 def channel_hopper(iface):
     all_channels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-    # all_channels = [1]
     num_interfaces = len(IFACE_list)
     channels_per_interface = len(all_channels) // num_interfaces
     channel_seq = []
@@ -86,8 +85,6 @@ def sniff_packets(iface):
 
             os.chmod(filename, 0o777)  
             print(f'[+] Changed permissions for {filename} to 777')
-            # shutil.copy(filename, f'/home/ragna/work/grafana_dash/wild_data/demo/{f"{iface}_capture_{counter}.pcap"}')
-            # shutil.copy(filename, f'/home/ragna/grafana_dash/wild_data/demo/{f"{iface}_capture_{counter}.pcap"}')
             shutil.copy(filename, f'/home/ragnar/dashboard_tech_summit/wild_data/demo/{f"{iface}_capture_{counter}.pcap"}')
 
 
