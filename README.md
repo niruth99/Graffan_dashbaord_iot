@@ -1,19 +1,69 @@
-# To run:
-1. Populate required data for creating postgres tables and prediction bases by adding required `json` into `scripts/db`
-2. Create SQL file by running `scripts/generate_sql.py` (outputs SQL to stdout, pipe it to file using `python3 generate_sql.py > setup.sql`)
-3. Move SQL file to `db_setup`. Filenames in this folder can be anything, .sql files will be ran in on init (when postgres db hasn't been initialised)
-4. Ensure that new pcap files are being added to any folder in `wild_data`. For example `wild_data/folder_1/capture_1.pcap` will be read but `wild_data/capture_1.pcap` will not. Also ensure that paths to each pcap are unique (`folder_1/capture_1.pcap`, `folder_2/capture_1.pcap` will both be read). pcap files placed in this folder will be deleted after reading. If path is reused it will not be read (if `folder_1/capture_1.pcap` is read and deleted, adding a file by the same name in the same folder will not be read.)
-5. Compose containers using `sudo docker compose up --build -d`
-6. Visit https://127.0.0.1:3000 and login with login: admin, password: admin
+# Real-Time Monitoring Dashboard
 
-`reset_data.sh`
-Deletes all data from database
-After resetting db, the `data` docker container likely failed to start. run `sudo docker start data`
+## Overview
+We developed a **Grafana**-based real-time monitoring dashboard for intuitive device monitoring and analysis. This tool leverages our signature-based method from the paper *[Passive Identification of WiFi Devices At-Scale: A Data-Driven Approach](https://doi.org/10.1109/LCN49529.2024.9999999)*, which provides a passive identification approach to monitor WiFi devices in real-time.
 
-`scripts/generate_sql.py`
-Python script for generating `init.sql`. Reads command line arguments for json files containing devices as highest level keys, and features as second level keys.
-Creates tables, populates device map with unique ids, outputs to `stdout`. Ideally piped into a file.
+The **Landing Page** serves as the central hub for monitoring and categorizing incoming probe requests. It consists of the following key components:
+- **Live Feed Display**: A dynamic, real-time view of incoming probes, categorized by device type.
+- **Device Breakdown Panel**: Detailed information about detected devices, including features and characteristics from the database.
+- **Probability Analysis**: Transparent breakdown of how each probe resembles specific devices, showing classification probabilities.
+- **Probe Calculation Summary**: A panel detailing the categorization process behind the probe frames.
 
-**Be sure to replace `db_setup/setup.sql` with new SQL file and delete old database otherwise changes may not apply**
+The **Interactive Map** visualizes probe data across multiple sites and includes:
+- **Site-Specific Device Breakdown**: View device breakdowns for individual sites.
+- **Customizable Filtering Options**: Adjust the map view based on vendor, device model, and other criteria.
+- **Cross-Site Comparisons**: Track devices across different sites using MAC addresses to identify patterns in device mobility or reuse.
 
-See `scripts/generate_data.py/predict_signatures` for data prediction and upload to db.
+![Dashboard Overview](path_to_your_image.png)
+
+## Instructions for Execution
+
+### Setup
+
+1. **Populate Data**:
+   - Add required JSON data files for creating PostgreSQL tables and prediction bases into the `scripts/db` folder.
+
+2. **Generate SQL File**:
+   - Run the following command to generate the SQL file:
+     ```bash
+     python3 scripts/generate_sql.py > setup.sql
+     ```
+   - Move the generated SQL file into the `db_setup` folder. Ensure all `.sql` files in this folder will be executed during initialization (only when the PostgreSQL database hasn’t been initialized).
+
+3. **Ensure Pcap File Setup**:
+   - Add new `.pcap` files to any folder inside `wild_data`. For example:
+     ```
+     wild_data/folder_1/capture_1.pcap
+     ```
+     - Files must be placed inside subfolders (e.g., `folder_1`), and their paths must be unique.
+
+4. **Compose Containers**:
+   - Build and start containers using Docker Compose:
+     ```bash
+     sudo docker compose up --build -d
+     ```
+
+5. **Access the Dashboard**:
+   - Visit the Grafana dashboard at `https://127.0.0.1:3000` and log in using:
+     - **Username**: admin
+     - **Password**: admin
+
+6. **Reset Database**:
+   - To delete all data from the database, use the `reset_data.sh` script. After resetting, the data container may fail to start, so run:
+     ```bash
+     sudo docker start data
+     ```
+
+### Additional Scripts
+- **`scripts/generate_sql.py`**: Generates the `init.sql` file, reads command-line arguments for JSON files, creates tables, and populates the device map.
+- **`scripts/generate_data.py/predict_signatures`**: Used for data prediction and uploading to the database.
+
+### Important Notes
+- Be sure to replace the old SQL file in `db_setup/setup.sql` with the newly generated one. Delete the old database to ensure changes are applied.
+- Ensure the file paths for `.pcap` are unique and correctly structured to avoid reprocessing the same data.
+
+## Citation
+
+To cite the method and the tool, refer to the following paper:
+
+- Bogahawatta, N., Karunanayaka, Y. S., Seneviratne, S., Thilakarathna, K., Masood, R., Kanhere, S., & Seneviratne, A. (2024, October). *Passive Identification of WiFi Devices At-Scale: A Data-Driven Approach*. In *2024 IEEE 49th Conference on Local Computer Networks (LCN)* (pp. 1-9). IEEE. [Link to Paper](https://doi.org/10.1109/LCN49529.2024.
