@@ -1,5 +1,5 @@
 ## Overview
-We developed a **Grafana**-based real-time monitoring dashboard for intuitive device monitoring and analysis. This tool leverages our signature-based method from the paper *[Passive Identification of WiFi Devices At-Scale: A Data-Driven Approach](https://doi.org/10.1109/LCN49529.2024.9999999)*, which provides a passive identification approach to monitor WiFi devices in real-time.
+We developed a **Grafana**-based real-time monitoring dashboard for intuitive device monitoring and analysis. This tool leverages our signature-based method from the paper *[Passive Identification of WiFi Devices At-Scale: A Data-Driven Approach](https://ieeexplore.ieee.org/abstract/document/10639764)*, which provides a passive identification approach to monitor WiFi devices in real-time.
 
 The **Landing Page** serves as the central hub for monitoring and categorizing incoming probe requests. It consists of the following key components:
 - **Live Feed Display**: A dynamic, real-time view of incoming probes, categorized by device type.
@@ -12,7 +12,7 @@ The **Interactive Map** visualizes probe data across multiple sites and includes
 - **Customizable Filtering Options**: Adjust the map view based on vendor, device model, and other criteria.
 - **Cross-Site Comparisons**: Track devices across different sites using MAC addresses to identify patterns in device mobility or reuse.
 
-![Dashboard Overview](path_to_your_image.png)
+![Dashboard Overview](dash_full_v2-cropped.pdf)
 
 ## Instructions for Execution
 
