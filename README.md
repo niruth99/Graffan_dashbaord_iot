@@ -1,5 +1,3 @@
-# Real-Time Monitoring Dashboard
-
 ## Overview
 We developed a **Grafana**-based real-time monitoring dashboard for intuitive device monitoring and analysis. This tool leverages our signature-based method from the paper *[Passive Identification of WiFi Devices At-Scale: A Data-Driven Approach](https://doi.org/10.1109/LCN49529.2024.9999999)*, which provides a passive identification approach to monitor WiFi devices in real-time.
 
