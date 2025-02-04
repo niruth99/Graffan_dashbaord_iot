@@ -12,7 +12,7 @@ The **Interactive Map** visualizes probe data across multiple sites and includes
 - **Customizable Filtering Options**: Adjust the map view based on vendor, device model, and other criteria.
 - **Cross-Site Comparisons**: Track devices across different sites using MAC addresses to identify patterns in device mobility or reuse.
 
-![Dashboard Overview](dash_full_v2-cropped.pdf)
+![Dashboard Overview](dash_full_v2-cropped.png)
 
 ## Instructions for Execution
 
